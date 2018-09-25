@@ -65,7 +65,7 @@
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let mut i2c_switch = TCA9548A::new(dev, address);
-//! i2c_switch.select(0b0000_0001).unwrap();
+//! i2c_switch.select_channels(0b0000_0001).unwrap();
 //! # }
 //! ```
 //! ### Reading and writing to device connected to channel 0 (SD0/SC0 pins)
@@ -83,7 +83,7 @@
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let mut i2c_switch = TCA9548A::new(dev, address);
-//! i2c_switch.select(0b0000_0001).unwrap();
+//! i2c_switch.select_channels(0b0000_0001).unwrap();
 //!
 //! let slave_address = 0b010_0000; // example slave address
 //! let data_for_slave = [0b0101_0101, 0b1010_1010]; // some data to be sent
@@ -178,7 +178,7 @@ macro_rules! device {
                 /// corresponds to channel 7.
                 /// A `0` disables the channel and a `1` enables it.
                 /// Several channels can be enabled at the same time
-                pub fn select(&mut self, channels: u8) -> Result<(), Error<E>> {
+                pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
                     self.i2c
                         .write(DEVICE_BASE_ADDRESS, &[channels])
                         .map_err(Error::I2C)

@@ -14,7 +14,7 @@ fn main() {
     let mut i2c_switch = TCA9548A::new(dev, SlaveAddr::default());
 
     // Enable channel 0
-    i2c_switch.select(0b0000_0001).unwrap();
+    i2c_switch.select_channels(0b0000_0001).unwrap();
 
     // write to slave connected to channel 0 using the I2C switch just as a normal I2C device
     if let Err(e) = i2c_switch.write(slave_address, &data_for_slave) {

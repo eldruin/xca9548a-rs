@@ -23,9 +23,9 @@ macro_rules! device_tests {
             }
 
             #[test]
-            fn can_select() {
+            fn can_select_channels() {
                 let mut switch = setup(&[0]);
-                switch.select(0b0000_0001).unwrap();
+                switch.select_channels(0b0000_0001).unwrap();
                 check_sent_data(switch, DEVICE_BASE_ADDRESS, &[0b0000_0001]);
             }
 
@@ -34,7 +34,7 @@ macro_rules! device_tests {
                 let slave_address = 0b010_0000;
                 let slave_data = [0b0101_0101, 0b1010_1010];
                 let mut switch = setup(&[0]);
-                switch.select(0b0000_0001).unwrap();
+                switch.select_channels(0b0000_0001).unwrap();
                 
                 switch.write(slave_address, &slave_data).unwrap();
                 check_sent_data(switch, slave_address, &slave_data);
@@ -45,7 +45,7 @@ macro_rules! device_tests {
                 let slave_address = 0b010_0000;
                 let slave_data = [0b0101_0101, 0b1010_1010];
                 let mut switch = setup(&slave_data);
-                switch.select(0b0000_0001).unwrap();
+                switch.select_channels(0b0000_0001).unwrap();
 
                 let mut read_data = [0; 2];
                 switch.read(slave_address, &mut read_data).unwrap();
@@ -60,7 +60,7 @@ macro_rules! device_tests {
                 let slave_write_data = [0b0101_0101, 0b1010_1010];
                 let slave_read_data =  [0b1001_1001, 0b0110_0110];
                 let mut switch = setup(&slave_read_data);
-                switch.select(0b0000_0001).unwrap();
+                switch.select_channels(0b0000_0001).unwrap();
                 
                 let mut read_data = [0; 2];
                 switch.write_read(slave_address, &slave_write_data, &mut read_data).unwrap();
