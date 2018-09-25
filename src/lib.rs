@@ -185,6 +185,25 @@ macro_rules! device {
                 }
             }
 
+            impl<I2C, E> $device_name<I2C>
+            where
+                I2C: i2c::Read<Error = E>
+            {
+                /// Get status of channels.
+                ///
+                /// Each bit corresponds to a channel.
+                /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
+                /// corresponds to channel 7.
+                /// A `0` means the channel is disabled and a `1` that the channel is enabled.
+                pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+                    let mut data = [0];
+                    self.i2c
+                        .read(DEVICE_BASE_ADDRESS, &mut data)
+                        .map_err(Error::I2C)
+                        .and(Ok(data[0]))
+                }
+            }
+
             impl<I2C, E> i2c::Write for $device_name<I2C>
             where
                 I2C: i2c::Write<Error = E> {

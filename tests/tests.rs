@@ -30,6 +30,16 @@ macro_rules! device_tests {
             }
 
             #[test]
+            fn can_get_channel_status() {
+                let status = [0b0101_0101];
+                let mut switch = setup(&status);
+                let read_status = switch.get_channel_status().unwrap();
+                assert_eq!(status[0], read_status);
+                let dev = switch.destroy();
+                assert_eq!(dev.get_last_address(), Some(DEVICE_BASE_ADDRESS));
+            }
+
+            #[test]
             fn can_write_to_slave() {
                 let slave_address = 0b010_0000;
                 let slave_data = [0b0101_0101, 0b1010_1010];
