@@ -2,12 +2,15 @@
 name = "xca9548a"
 version = "0.1.0"
 authors = ["Diego Barrios Romero <eldruin@gmail.com>"]
-repository = "https://github.com/eldruin/xca9548a"
+repository = "https://github.com/eldruin/xca9548a-rs"
 license = "MIT OR Apache-2.0"
 description = "Platform-agnostic Rust driver for the TCA9548A and PCA9548A I2C switches/multiplexers."
 readme = "README.md"
 keywords = ["i2c", "switch", "driver", "embedded-hal-driver"]
 categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/eldruin/xca9548a-rs"
+documentation = "https://docs.rs/xca9548a"
+
 include = [
     "**/*.rs",
     "Cargo.toml",
