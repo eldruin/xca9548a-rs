@@ -9,7 +9,14 @@ This driver allows you to:
 - Communicate with the slaves connected to the enabled channels transparently.
 
 ## The devices
-TODO
+The TCA9548A and PCA9548 devices have eight bidirectional translating switches
+that can be controlled through the I2C bus. The SCL/SDA upstream pair fans out
+to eight downstream pairs, or channels.
+Any individual SCn/SDn channel or combination of channels can be selected,
+determined by the contents of the programmable control register.
+These downstream channels can be used to resolve I2C slave address conflicts.
+For example, if  eight identical digital temperature sensors are needed in the
+application, one sensor can be connected at each channel: 0-7.
 
 Datasheets:
 - [TCA9548A](http://www.ti.com/lit/ds/symlink/tca9548a.pdf)
