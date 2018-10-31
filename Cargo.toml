@@ -20,6 +20,10 @@ include = [
     "LICENSE-APACHE",
 ]
 
+[badges.travis-ci]
+branch = "master"
+repository = "eldruin/xca9548a-rs"
+
 [dependencies]
 embedded-hal = "0.2"
 

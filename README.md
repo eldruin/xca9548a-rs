@@ -1,4 +1,4 @@
-# Rust TCA9548A and PCA9548A I2C Switch Driver
+# Rust TCA9548A and PCA9548A I2C Switch Driver [![crates.io](https://img.shields.io/crates/v/xca9548a.svg)](https://crates.io/crates/xca9548a) [![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a) [![Build Status](https://travis-ci.org/eldruin/xca9548a-rs.svg?branch=master)](https://travis-ci.org/eldruin/xca9548a-rs)
 
 This is a platform agnostic Rust driver for the for TCA9548A and PCA9548A I2C
 switches/multiplexers, based on the
