@@ -20,7 +20,7 @@
 //! ### Datasheets
 //! - [TCA9548A](http://www.ti.com/lit/ds/symlink/tca9548a.pdf)
 //! - [PCA9548A](http://www.ti.com/lit/ds/symlink/pca9548a.pdf)
-//! 
+//!
 //! ## Usage examples (see also examples folder)
 //!
 //! ### Instantiating with the default address
@@ -94,7 +94,7 @@
 //!
 //! let slave_address = 0b010_0000; // example slave address
 //! let data_for_slave = [0b0101_0101, 0b1010_1010]; // some data to be sent
-//! 
+//!
 //! // Read some data from a slave connected to channel 0 using the
 //! // I2C switch just as a normal I2C device
 //! let mut read_data = [0; 2];
@@ -126,7 +126,7 @@ pub enum SlaveAddr {
     /// Default slave address
     Default,
     /// Alternative slave address providing bit values for A2, A1 and A0
-    Alternative(bool, bool, bool)
+    Alternative(bool, bool, bool),
 }
 
 impl Default for SlaveAddr {
@@ -140,10 +140,9 @@ impl SlaveAddr {
     fn addr(self, default: u8) -> u8 {
         match self {
             SlaveAddr::Default => default,
-            SlaveAddr::Alternative(a2, a1, a0) => default           |
-                                                  ((a2 as u8) << 2) |
-                                                  ((a1 as u8) << 1) |
-                                                    a0 as u8
+            SlaveAddr::Alternative(a2, a1, a0) => {
+                default | ((a2 as u8) << 2) | ((a1 as u8) << 1) | a0 as u8
+            }
         }
     }
 }
@@ -215,7 +214,7 @@ macro_rules! device {
             where
                 I2C: i2c::Write<Error = E> {
                 type Error = E;
-                
+
                 fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
                     self.i2c.write(address, bytes)
                 }
@@ -225,7 +224,7 @@ macro_rules! device {
             where
                 I2C: i2c::Read<Error = E> {
                 type Error = E;
-                
+
                 fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
                     self.i2c.read(address, buffer)
                 }
@@ -235,7 +234,7 @@ macro_rules! device {
             where
                 I2C: i2c::WriteRead<Error = E> {
                 type Error = E;
-                
+
                 fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Self::Error> {
                     self.i2c.write_read(address, bytes, buffer)
                 }
@@ -249,22 +248,36 @@ device!(TCA9548A, PCA9548A);
 
 #[cfg(test)]
 mod tests {
-    extern crate embedded_hal_mock as hal;
-
+    use super::DEVICE_BASE_ADDRESS as BASE_ADDR;
     use super::*;
 
     #[test]
     fn can_get_default_address() {
         let addr = SlaveAddr::default();
-        assert_eq!(DEVICE_BASE_ADDRESS, addr.addr(DEVICE_BASE_ADDRESS));
+        assert_eq!(BASE_ADDR, addr.addr(BASE_ADDR));
     }
 
     #[test]
     fn can_generate_alternative_addresses() {
-        assert_eq!(0b111_0000, SlaveAddr::Alternative(false, false, false).addr(DEVICE_BASE_ADDRESS));
-        assert_eq!(0b111_0001, SlaveAddr::Alternative(false, false,  true).addr(DEVICE_BASE_ADDRESS));
-        assert_eq!(0b111_0010, SlaveAddr::Alternative(false,  true, false).addr(DEVICE_BASE_ADDRESS));
-        assert_eq!(0b111_0100, SlaveAddr::Alternative( true, false, false).addr(DEVICE_BASE_ADDRESS));
-        assert_eq!(0b111_0111, SlaveAddr::Alternative( true,  true,  true).addr(DEVICE_BASE_ADDRESS));
+        assert_eq!(
+            0b111_0000,
+            SlaveAddr::Alternative(false, false, false).addr(BASE_ADDR)
+        );
+        assert_eq!(
+            0b111_0001,
+            SlaveAddr::Alternative(false, false, true).addr(BASE_ADDR)
+        );
+        assert_eq!(
+            0b111_0010,
+            SlaveAddr::Alternative(false, true, false).addr(BASE_ADDR)
+        );
+        assert_eq!(
+            0b111_0100,
+            SlaveAddr::Alternative(true, false, false).addr(BASE_ADDR)
+        );
+        assert_eq!(
+            0b111_0111,
+            SlaveAddr::Alternative(true, true, true).addr(BASE_ADDR)
+        );
     }
 }
