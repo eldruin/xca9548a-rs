@@ -13,16 +13,17 @@ documentation = "https://docs.rs/xca9548a"
 
 include = [
     "**/*.rs",
-    "Cargo.toml",
-    "README.md",
-    "CHANGELOG.md",
-    "LICENSE-MIT",
-    "LICENSE-APACHE",
+    "/Cargo.toml",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE-MIT",
+    "/LICENSE-APACHE",
 ]
 
-[badges.travis-ci]
-branch = "master"
-repository = "eldruin/xca9548a-rs"
+[badges]
+travis-ci = { repository = "eldruin/xca9584a-rs", branch = "master" }
+coveralls = { repository = "eldruin/xca9584a-rs", branch = "master", service = "github" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 embedded-hal = "0.2"
