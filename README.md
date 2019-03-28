@@ -1,9 +1,9 @@
 # Rust TCA9548A and PCA9548A I2C Switch Driver
 
-[![crates.io](https://img.shields.io/crates/v/xca9584a.svg)](https://crates.io/crates/xca9584a)
-[![Docs](https://docs.rs/xca9584a/badge.svg)](https://docs.rs/xca9584a)
-[![Build Status](https://travis-ci.org/eldruin/xca9584a-rs.svg?branch=master)](https://travis-ci.org/eldruin/xca9584a-rs)
-[![Coverage Status](https://coveralls.io/repos/github/eldruin/xca9584a-rs/badge.svg?branch=master)](https://coveralls.io/github/eldruin/xca9584a-rs?branch=master)
+[![crates.io](https://img.shields.io/crates/v/xca9548a.svg)](https://crates.io/crates/xca9548a)
+[![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a)
+[![Build Status](https://travis-ci.org/eldruin/xca9548a-rs.svg?branch=master)](https://travis-ci.org/eldruin/xca9548a-rs)
+[![Coverage Status](https://coveralls.io/repos/github/eldruin/xca9548a-rs/badge.svg?branch=master)](https://coveralls.io/github/eldruin/xca9548a-rs?branch=master)
 ![Maintenance Intention](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
 This is a platform agnostic Rust driver for the for TCA9548A and PCA9548A I2C

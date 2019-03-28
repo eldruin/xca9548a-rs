@@ -21,8 +21,8 @@ include = [
 ]
 
 [badges]
-travis-ci = { repository = "eldruin/xca9584a-rs", branch = "master" }
-coveralls = { repository = "eldruin/xca9584a-rs", branch = "master", service = "github" }
+travis-ci = { repository = "eldruin/xca9548a-rs", branch = "master" }
+coveralls = { repository = "eldruin/xca9548a-rs", branch = "master", service = "github" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
