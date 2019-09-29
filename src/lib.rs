@@ -123,7 +123,7 @@
 //! /// Defined here for completeness.
 //! struct Driver<I2C> {
 //!     i2c: I2C,
-//! };
+//! }
 //!
 //! impl<I2C, E> Driver<I2C>
 //! where I2C: Write<Error = E> + Read<Error = E> + WriteRead<Error = E> {
@@ -136,7 +136,7 @@
 //! let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let i2c_switch = TCA9548A::new(dev, address);
-//! let mut parts = i2c_switch.split();
+//! let parts = i2c_switch.split();
 //!
 //! let my_driver = Driver::new(parts.i2c0);
 //! let my_other_driver = Driver::new(parts.i2c1);
