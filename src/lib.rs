@@ -355,7 +355,7 @@ device!(TCA9548A);
 device!(PCA9548A);
 
 mod parts;
-pub use parts::{I2c0, I2c1, I2c2, I2c3, I2c4, I2c5, I2c6, I2c7, Parts};
+pub use parts::{I2cSlave, Parts};
 
 mod private {
     use super::*;
@@ -365,14 +365,7 @@ mod private {
     impl<I2C> Sealed for PCA9548A<I2C> {}
     impl<I2C> Sealed for TCA9548A<I2C> {}
     impl<'a, DEV, I2C> Sealed for Parts<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c0<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c1<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c2<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c3<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c4<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c5<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c6<'a, DEV, I2C> {}
-    impl<'a, DEV, I2C> Sealed for I2c7<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2cSlave<'a, DEV, I2C> {}
 }
 
 #[cfg(test)]
