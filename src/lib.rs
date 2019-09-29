@@ -168,7 +168,7 @@ where
     type Error = Error<E>;
     fn select_channels(&mut self, channels: u8) -> Result<(), Self::Error> {
         self.i2c
-            .write(DEVICE_BASE_ADDRESS, &[channels])
+            .write(self.address, &[channels])
             .map_err(Error::I2C)?;
         self.selected_channel_mask = channels;
         Ok(())
@@ -267,8 +267,9 @@ macro_rules! device {
             pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
                 let mut data = [0];
                 self.do_on_acquired(|mut dev| {
+                    let address = dev.address;
                     dev.i2c
-                        .read(DEVICE_BASE_ADDRESS, &mut data)
+                        .read(address, &mut data)
                         .map_err(Error::I2C)
                         .and(Ok(data[0]))
                 })
