@@ -18,20 +18,20 @@ fn main() {
 
     // write to slave connected to channel 0 using
     // the I2C switch just as a normal I2C device
-    if let Err(e) = switch.write(slave_address, &write_data) {
-        println!("Error received: {}", e);
+    if let Err(_) = switch.write(slave_address, &write_data) {
+        println!("Error received!");
     }
 
     // read from the slave connected to channel 0 using the
     // I2C switch just as a normal I2C device
     let mut read_data = [0; 2];
-    if let Err(e) = switch.read(slave_address, &mut read_data) {
-        println!("Error received: {}", e);
+    if let Err(_) = switch.read(slave_address, &mut read_data) {
+        println!("Error received!");
     }
 
     // write_read from the slave connected to channel 0 using
     // the I2C switch just as a normal I2C device
-    if let Err(e) = switch.write_read(slave_address, &write_data, &mut read_data) {
-        println!("Error received: {}", e);
+    if let Err(_) = switch.write_read(slave_address, &write_data, &mut read_data) {
+        println!("Error received!");
     }
 }
