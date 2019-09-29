@@ -151,12 +151,42 @@ impl SlaveAddr {
 }
 const DEVICE_BASE_ADDRESS: u8 = 0b111_0000;
 
+#[doc(hidden)]
 #[derive(Debug, Default)]
-struct Xca9548a<I2C> {
+pub struct Xca9548a<I2C> {
     /// The concrete I²C device implementation.
     pub(crate) i2c: I2C,
     /// The I²C device address.
     pub(crate) address: u8,
+    pub(crate) selected_channel_mask: u8,
+}
+
+impl<I2C, E> SelectChannels for Xca9548a<I2C>
+where
+    I2C: i2c::Write<Error = E>,
+{
+    type Error = Error<E>;
+    fn select_channels(&mut self, channels: u8) -> Result<(), Self::Error> {
+        self.i2c
+            .write(DEVICE_BASE_ADDRESS, &[channels])
+            .map_err(Error::I2C)?;
+        self.selected_channel_mask = channels;
+        Ok(())
+    }
+}
+
+#[doc(hidden)]
+pub trait DoOnAcquired<I2C>: private::Sealed {
+    fn do_on_acquired<R, E>(
+        &self,
+        f: impl FnOnce(cell::RefMut<Xca9548a<I2C>>) -> Result<R, Error<E>>,
+    ) -> Result<R, Error<E>>;
+}
+
+#[doc(hidden)]
+pub trait SelectChannels: private::Sealed {
+    type Error;
+    fn select_channels(&mut self, mask: u8) -> Result<(), Self::Error>;
 }
 
 macro_rules! device {
@@ -173,6 +203,7 @@ macro_rules! device {
                 let data = Xca9548a {
                     i2c,
                     address: address.addr(DEVICE_BASE_ADDRESS),
+                    selected_channel_mask: 0,
                 };
                 $device_name {
                     data: cell::RefCell::new(data),
@@ -184,7 +215,18 @@ macro_rules! device {
                 self.data.into_inner().i2c
             }
 
-            pub(crate) fn do_on_acquired<R, E>(
+            /// Split device into individual I2C devices
+            ///
+            /// It is not possible to know the compatibilities between channels
+            /// so when talking to a split I2C device, only its channel
+            /// will be selected.
+            pub fn split<'a>(&'a self) -> Parts<'a, $device_name<I2C>, I2C> {
+                Parts::new(&self)
+            }
+        }
+
+        impl<I2C> DoOnAcquired<I2C> for $device_name<I2C> {
+            fn do_on_acquired<R, E>(
                 &self,
                 f: impl FnOnce(cell::RefMut<Xca9548a<I2C>>) -> Result<R, Error<E>>,
             ) -> Result<R, Error<E>> {
@@ -208,11 +250,7 @@ macro_rules! device {
             /// A `0` disables the channel and a `1` enables it.
             /// Several channels can be enabled at the same time
             pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
-                self.do_on_acquired(|mut dev| {
-                    dev.i2c
-                        .write(DEVICE_BASE_ADDRESS, &[channels])
-                        .map_err(Error::I2C)
-                })
+                self.do_on_acquired(|mut dev| dev.select_channels(channels))
             }
         }
 
@@ -283,6 +321,27 @@ macro_rules! device {
 
 device!(TCA9548A);
 device!(PCA9548A);
+
+mod parts;
+pub use parts::{I2c0, I2c1, I2c2, I2c3, I2c4, I2c5, I2c6, I2c7, Parts};
+
+mod private {
+    use super::*;
+
+    pub trait Sealed {}
+    impl<I2C> Sealed for Xca9548a<I2C> {}
+    impl<I2C> Sealed for PCA9548A<I2C> {}
+    impl<I2C> Sealed for TCA9548A<I2C> {}
+    impl<'a, DEV, I2C> Sealed for Parts<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c0<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c1<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c2<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c3<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c4<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c5<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c6<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for I2c7<'a, DEV, I2C> {}
+}
 
 #[cfg(test)]
 mod tests {

@@ -86,6 +86,56 @@ macro_rules! device_tests {
                 assert_eq!(read_data, SLAVE_READ_DATA);
                 switch.destroy().done();
             }
+
+            #[test]
+            fn can_split_and_communicate_with_slave() {
+                let slave_read_data_2 = [0xAB, 0xCD];
+                let transactions = [
+                    I2cTrans::write(DEV_ADDR, vec![0x01]),
+                    I2cTrans::write(SLAVE_ADDR, SLAVE_WRITE_DATA.to_vec()),
+                    I2cTrans::write(DEV_ADDR, vec![0x02]),
+                    I2cTrans::read(SLAVE_ADDR, SLAVE_READ_DATA.to_vec()),
+                    I2cTrans::write(DEV_ADDR, vec![0x04]),
+                    I2cTrans::write_read(
+                        SLAVE_ADDR,
+                        SLAVE_WRITE_DATA.to_vec(),
+                        slave_read_data_2.to_vec(),
+                    ),
+                ];
+                let switch = $create(&transactions);
+                {
+                    let mut read_data_1 = [0; 2];
+                    let mut read_data_2 = [0; 2];
+                    let mut parts = switch.split();
+                    parts.i2c0.write(SLAVE_ADDR, &SLAVE_WRITE_DATA).unwrap();
+                    parts.i2c1.read(SLAVE_ADDR, &mut read_data_1).unwrap();
+                    parts
+                        .i2c2
+                        .write_read(SLAVE_ADDR, &SLAVE_WRITE_DATA, &mut read_data_2)
+                        .unwrap();
+                    assert_eq!(read_data_1, SLAVE_READ_DATA);
+                    assert_eq!(read_data_2, slave_read_data_2);
+                }
+                switch.destroy().done();
+            }
+
+            #[test]
+            fn when_split_only_change_channel_if_necessary() {
+                let transactions = [
+                    I2cTrans::write(DEV_ADDR, vec![0x01]),
+                    I2cTrans::write(SLAVE_ADDR, SLAVE_WRITE_DATA.to_vec()),
+                    I2cTrans::read(SLAVE_ADDR, SLAVE_READ_DATA.to_vec()),
+                ];
+                let switch = $create(&transactions);
+                {
+                    let mut read_data = [0; 2];
+                    let mut parts = switch.split();
+                    parts.i2c0.write(SLAVE_ADDR, &SLAVE_WRITE_DATA).unwrap();
+                    parts.i2c0.read(SLAVE_ADDR, &mut read_data).unwrap();
+                    assert_eq!(read_data, SLAVE_READ_DATA);
+                }
+                switch.destroy().done();
+            }
         }
     };
 }
