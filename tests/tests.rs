@@ -1,87 +1,94 @@
 extern crate embedded_hal;
 extern crate embedded_hal_mock as hal;
+use hal::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 extern crate xca9548a;
 use xca9548a::{SlaveAddr, PCA9548A, TCA9548A};
 
-const DEVICE_BASE_ADDRESS: u8 = 0b111_0000;
+const DEV_ADDR: u8 = 0b111_0000;
+
+fn new_tca9548a(transactions: &[I2cTrans]) -> TCA9548A<I2cMock> {
+    TCA9548A::new(I2cMock::new(&transactions), SlaveAddr::default())
+}
+
+fn new_pca9548a(transactions: &[I2cTrans]) -> PCA9548A<I2cMock> {
+    PCA9548A::new(I2cMock::new(&transactions), SlaveAddr::default())
+}
 
 macro_rules! device_tests {
-    ( $device_name:ident, $device_tests_mod:ident ) => {
+    ( $create:ident, $device_tests_mod:ident ) => {
         mod $device_tests_mod {
             use super::*;
-            use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
-            fn setup<'a>(data: &'a [u8]) -> $device_name<hal::I2cMock<'a>> {
-                let mut dev = hal::I2cMock::new();
-                dev.set_read_data(&data);
-                $device_name::new(dev, SlaveAddr::default())
-            }
-
-            fn check_sent_data(switch: $device_name<hal::I2cMock>, address: u8, data: &[u8]) {
-                let dev = switch.destroy();
-                assert_eq!(dev.get_last_address(), Some(address));
-                assert_eq!(dev.get_write_data(), &data[..]);
-            }
+            use embedded_hal::prelude::*;
+            const SLAVE_ADDR: u8 = 0b010_0000;
+            const SLAVE_WRITE_DATA: [u8; 2] = [0b0101_0101, 0b1010_1010];
+            const SLAVE_READ_DATA: [u8; 2] = [0b1001_1001, 0b0110_0110];
 
             #[test]
             fn can_select_channels() {
-                let mut switch = setup(&[0]);
-                switch.select_channels(0b0000_0001).unwrap();
-                check_sent_data(switch, DEVICE_BASE_ADDRESS, &[0b0000_0001]);
+                let transactions = [I2cTrans::write(DEV_ADDR, vec![0x01])];
+                let mut switch = $create(&transactions);
+                switch.select_channels(0x01).unwrap();
+                switch.destroy().done();
             }
 
             #[test]
             fn can_get_channel_status() {
-                let status = [0b0101_0101];
-                let mut switch = setup(&status);
+                let transactions = [I2cTrans::read(DEV_ADDR, vec![0b0101_0101])];
+                let mut switch = $create(&transactions);
                 let read_status = switch.get_channel_status().unwrap();
-                assert_eq!(status[0], read_status);
-                let dev = switch.destroy();
-                assert_eq!(dev.get_last_address(), Some(DEVICE_BASE_ADDRESS));
+                assert_eq!(0b0101_0101, read_status);
+                switch.destroy().done();
             }
 
             #[test]
             fn can_write_to_slave() {
-                let slave_address = 0b010_0000;
-                let slave_data = [0b0101_0101, 0b1010_1010];
-                let mut switch = setup(&[0]);
+                let transactions = [
+                    I2cTrans::write(DEV_ADDR, vec![0x01]),
+                    I2cTrans::write(SLAVE_ADDR, SLAVE_WRITE_DATA.to_vec()),
+                ];
+                let mut switch = $create(&transactions);
                 switch.select_channels(0b0000_0001).unwrap();
-
-                switch.write(slave_address, &slave_data).unwrap();
-                check_sent_data(switch, slave_address, &slave_data);
+                switch.write(SLAVE_ADDR, &SLAVE_WRITE_DATA).unwrap();
+                switch.destroy().done();
             }
 
             #[test]
             fn can_read_from_slave() {
-                let slave_address = 0b010_0000;
-                let slave_data = [0b0101_0101, 0b1010_1010];
-                let mut switch = setup(&slave_data);
+                let transactions = [
+                    I2cTrans::write(DEV_ADDR, vec![0x01]),
+                    I2cTrans::read(SLAVE_ADDR, SLAVE_READ_DATA.to_vec()),
+                ];
+                let mut switch = $create(&transactions);
                 switch.select_channels(0b0000_0001).unwrap();
 
                 let mut read_data = [0; 2];
-                switch.read(slave_address, &mut read_data).unwrap();
-                let dev = switch.destroy();
-                assert_eq!(dev.get_last_address(), Some(slave_address));
-                assert_eq!(read_data, slave_data);
+                switch.read(SLAVE_ADDR, &mut read_data).unwrap();
+                assert_eq!(read_data, SLAVE_READ_DATA);
+                switch.destroy().done();
             }
-
             #[test]
             fn can_write_read_from_slave() {
-                let slave_address = 0b010_0000;
-                let slave_write_data = [0b0101_0101, 0b1010_1010];
-                let slave_read_data = [0b1001_1001, 0b0110_0110];
-                let mut switch = setup(&slave_read_data);
+                let transactions = [
+                    I2cTrans::write(DEV_ADDR, vec![0x01]),
+                    I2cTrans::write_read(
+                        SLAVE_ADDR,
+                        SLAVE_WRITE_DATA.to_vec(),
+                        SLAVE_READ_DATA.to_vec(),
+                    ),
+                ];
+                let mut switch = $create(&transactions);
                 switch.select_channels(0b0000_0001).unwrap();
 
                 let mut read_data = [0; 2];
                 switch
-                    .write_read(slave_address, &slave_write_data, &mut read_data)
+                    .write_read(SLAVE_ADDR, &SLAVE_WRITE_DATA, &mut read_data)
                     .unwrap();
-                check_sent_data(switch, slave_address, &slave_write_data);
-                assert_eq!(read_data, slave_read_data);
+                assert_eq!(read_data, SLAVE_READ_DATA);
+                switch.destroy().done();
             }
         }
     };
 }
 
-device_tests!(TCA9548A, tca9548a_tests);
-device_tests!(PCA9548A, pca9548a_tests);
+device_tests!(new_tca9548a, tca9548a_tests);
+device_tests!(new_pca9548a, pca9548a_tests);
