@@ -105,6 +105,44 @@
 //! # }
 //! ```
 //!
+//! ### Splitting into individual I2C devices and passing them into drivers
+//!
+//! Drivers usually take ownership of the I2C device.
+//! It does not matter if the slaves have the same address.
+//! Switching will be done automatically as necessary.
+//!
+//! ```no_run
+//! extern crate embedded_hal;
+//! extern crate linux_embedded_hal as hal;
+//! extern crate xca9548a;
+//!
+//! use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+//! use xca9548a::{TCA9548A, SlaveAddr};
+//!
+//! /// Some driver defined in a different crate.
+//! /// Defined here for completeness.
+//! struct Driver<I2C> {
+//!     i2c: I2C,
+//! };
+//!
+//! impl<I2C, E> Driver<I2C>
+//! where I2C: Write<Error = E> + Read<Error = E> + WriteRead<Error = E> {
+//!     pub fn new(i2c: I2C) -> Self {
+//!         Driver { i2c }
+//!     }
+//! }
+//!
+//! # fn main() {
+//! let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
+//! let address = SlaveAddr::default();
+//! let i2c_switch = TCA9548A::new(dev, address);
+//! let mut parts = i2c_switch.split();
+//!
+//! let my_driver = Driver::new(parts.i2c0);
+//! let my_other_driver = Driver::new(parts.i2c1);
+//! # }
+//! ```
+//!
 //! ### Splitting into individual I2C devices
 //!
 //! It does not matter if the slaves have the same address.
@@ -135,6 +173,7 @@
 //! parts.i2c1.read(slave_address, &mut read_data).unwrap();
 //! # }
 //! ```
+
 //!
 
 #![deny(unsafe_code)]
