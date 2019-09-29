@@ -105,6 +105,34 @@
 //! # }
 //! ```
 //!
+//! ### Splitting into individual I2C devices
+//!
+//! ```no_run
+//! extern crate embedded_hal;
+//! extern crate linux_embedded_hal as hal;
+//! extern crate xca9548a;
+//!
+//! use embedded_hal::blocking::i2c::{ Read, Write };
+//! use xca9548a::{ TCA9548A, SlaveAddr };
+//!
+//! # fn main() {
+//! let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
+//! let address = SlaveAddr::default();
+//! let i2c_switch = TCA9548A::new(dev, address);
+//! let mut parts = i2c_switch.split();
+//!
+//! let slave_address = 0b010_0000; // example slave address
+//! let data_for_slave = [0b0101_0101, 0b1010_1010]; // some data to be sent
+//!
+//! // Write some data to the slave using normal I2C interface
+//! parts.i2c0.write(slave_address, &data_for_slave).unwrap();
+//!
+//! // Read some data from a slave connected to channel 1
+//! let mut read_data = [0; 2];
+//! parts.i2c1.read(slave_address, &mut read_data).unwrap();
+//! # }
+//! ```
+//!
 
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
