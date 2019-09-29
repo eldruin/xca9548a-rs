@@ -149,102 +149,108 @@ impl SlaveAddr {
 const DEVICE_BASE_ADDRESS: u8 = 0b111_0000;
 
 macro_rules! device {
-    ( $($device_name:ident),+ ) => {
-        $(
-            /// Device driver
-            #[derive(Debug, Default)]
-            pub struct $device_name<I2C> {
-                /// The concrete I²C device implementation.
-                i2c: I2C,
-                /// The I²C device address.
+    ( $device_name:ident ) => {
+        /// Device driver
+        #[derive(Debug, Default)]
+        pub struct $device_name<I2C> {
+            /// The concrete I²C device implementation.
+            i2c: I2C,
+            /// The I²C device address.
+            address: u8,
+        }
+
+        impl<I2C, E> $device_name<I2C>
+        where
+            I2C: i2c::Write<Error = E>,
+        {
+            /// Create new instance of the device
+            pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
+                $device_name {
+                    i2c,
+                    address: address.addr(DEVICE_BASE_ADDRESS),
+                }
+            }
+
+            /// Destroy driver instance, return I²C bus instance.
+            pub fn destroy(self) -> I2C {
+                self.i2c
+            }
+
+            /// Select which channels are enabled.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
+            /// corresponds to channel 7.
+            /// A `0` disables the channel and a `1` enables it.
+            /// Several channels can be enabled at the same time
+            pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
+                self.i2c
+                    .write(DEVICE_BASE_ADDRESS, &[channels])
+                    .map_err(Error::I2C)
+            }
+        }
+
+        impl<I2C, E> $device_name<I2C>
+        where
+            I2C: i2c::Read<Error = E>,
+        {
+            /// Get status of channels.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
+            /// corresponds to channel 7.
+            /// A `0` means the channel is disabled and a `1` that the channel is enabled.
+            pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+                let mut data = [0];
+                self.i2c
+                    .read(DEVICE_BASE_ADDRESS, &mut data)
+                    .map_err(Error::I2C)
+                    .and(Ok(data[0]))
+            }
+        }
+
+        impl<I2C, E> i2c::Write for $device_name<I2C>
+        where
+            I2C: i2c::Write<Error = E>,
+        {
+            type Error = E;
+
+            fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+                self.i2c.write(address, bytes)
+            }
+        }
+
+        impl<I2C, E> i2c::Read for $device_name<I2C>
+        where
+            I2C: i2c::Read<Error = E>,
+        {
+            type Error = E;
+
+            fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+                self.i2c.read(address, buffer)
+            }
+        }
+
+        impl<I2C, E> i2c::WriteRead for $device_name<I2C>
+        where
+            I2C: i2c::WriteRead<Error = E>,
+        {
+            type Error = E;
+
+            fn write_read(
+                &mut self,
                 address: u8,
+                bytes: &[u8],
+                buffer: &mut [u8],
+            ) -> Result<(), Self::Error> {
+                self.i2c.write_read(address, bytes, buffer)
             }
-
-            impl<I2C, E> $device_name<I2C>
-            where
-                I2C: i2c::Write<Error = E>
-            {
-                /// Create new instance of the device
-                pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
-                    $device_name {
-                        i2c,
-                        address: address.addr(DEVICE_BASE_ADDRESS),
-                    }
-                }
-
-                /// Destroy driver instance, return I²C bus instance.
-                pub fn destroy(self) -> I2C {
-                    self.i2c
-                }
-
-                /// Select which channels are enabled.
-                ///
-                /// Each bit corresponds to a channel.
-                /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
-                /// corresponds to channel 7.
-                /// A `0` disables the channel and a `1` enables it.
-                /// Several channels can be enabled at the same time
-                pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
-                    self.i2c
-                        .write(DEVICE_BASE_ADDRESS, &[channels])
-                        .map_err(Error::I2C)
-                }
-            }
-
-            impl<I2C, E> $device_name<I2C>
-            where
-                I2C: i2c::Read<Error = E>
-            {
-                /// Get status of channels.
-                ///
-                /// Each bit corresponds to a channel.
-                /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
-                /// corresponds to channel 7.
-                /// A `0` means the channel is disabled and a `1` that the channel is enabled.
-                pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
-                    let mut data = [0];
-                    self.i2c
-                        .read(DEVICE_BASE_ADDRESS, &mut data)
-                        .map_err(Error::I2C)
-                        .and(Ok(data[0]))
-                }
-            }
-
-            impl<I2C, E> i2c::Write for $device_name<I2C>
-            where
-                I2C: i2c::Write<Error = E> {
-                type Error = E;
-
-                fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-                    self.i2c.write(address, bytes)
-                }
-            }
-
-            impl<I2C, E> i2c::Read for $device_name<I2C>
-            where
-                I2C: i2c::Read<Error = E> {
-                type Error = E;
-
-                fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-                    self.i2c.read(address, buffer)
-                }
-            }
-
-            impl<I2C, E> i2c::WriteRead for $device_name<I2C>
-            where
-                I2C: i2c::WriteRead<Error = E> {
-                type Error = E;
-
-                fn write_read(&mut self, address: u8, bytes: &[u8], buffer: &mut [u8]) -> Result<(), Self::Error> {
-                    self.i2c.write_read(address, bytes, buffer)
-                }
-            }
-
-        )*
-    }
+        }
+    };
 }
 
-device!(TCA9548A, PCA9548A);
+device!(TCA9548A);
+device!(PCA9548A);
 
 #[cfg(test)]
 mod tests {
