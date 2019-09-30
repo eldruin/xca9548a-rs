@@ -10,8 +10,9 @@ This is a platform agnostic Rust driver for the for TCA9548A and PCA9548A I2C
 switches/multiplexers using the [`embedded-hal`] traits.
 
 This driver allows you to:
-- Enable one or multiple I2C channels.
+- Enable one or multiple I2C channels. See: `select_channels()`.
 - Communicate with the slaves connected to the enabled channels transparently.
+- Split the device into slave (virtual) I2C devices (one per channel). See: `split()`.
 
 ## The devices
 The TCA9548A and PCA9548 devices have eight bidirectional translating switches

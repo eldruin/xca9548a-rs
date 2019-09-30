@@ -4,10 +4,12 @@
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //!
 //! This driver allows you to:
-//! - Enable one or multiple I2C channels.
+//! - Enable one or multiple I2C channels. See `select_channels()`.
 //! - Communicate with the slaves connected to the enabled channels transparently.
+//! - Split the device into slave (virtual) I2C devices (one per channel). See: `split()`.
 //!
 //! ## The devices
+//!
 //! The TCA9548A and PCA9548 devices have eight bidirectional translating switches
 //! that can be controlled through the I2C bus. The SCL/SDA upstream pair fans out
 //! to eight downstream pairs, or channels.
