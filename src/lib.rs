@@ -4,9 +4,12 @@
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //!
 //! This driver allows you to:
-//! - Enable one or multiple I2C channels. See `select_channels()`.
+//! - Enable one or multiple I2C channels. See [`select_channels()`].
 //! - Communicate with the slaves connected to the enabled channels transparently.
-//! - Split the device into slave (virtual) I2C devices (one per channel). See: `split()`.
+//! - Split the device into slave (virtual) I2C devices (one per channel). See: [`split()`].
+//!
+//! [`select_channels()`]: struct.Xca9548a.html#method.select_channels
+//! [`split()`]: struct.Xca9548a.html#method.split
 //!
 //! ## The devices
 //!
