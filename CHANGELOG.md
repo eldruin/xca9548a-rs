@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-
 - Splitting device into slave (virtual) I2C devices.
+
+### Changed
+- [breaking-change] Fuse TCA9548A and PCA9548A structs into Xca9548a since
+  their implementation is the same. The new name also follows the Rust
+  naming convention.
 
 ## 0.1.0 - 2018-09-27
 
