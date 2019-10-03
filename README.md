@@ -29,6 +29,13 @@ Datasheets:
 
 ## Usage
 
+To use this driver, import this crate and an `embedded_hal` implementation,
+then instantiate the device.
+
+Please find additional examples using hardware in this repository: [driver-examples]
+
+[driver-examples]: https://github.com/eldruin/driver-examples
+
 ```rust
 extern crate embedded_hal;
 extern crate linux_embedded_hal;
