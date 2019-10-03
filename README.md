@@ -4,7 +4,6 @@
 [![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a)
 [![Build Status](https://travis-ci.org/eldruin/xca9548a-rs.svg?branch=master)](https://travis-ci.org/eldruin/xca9548a-rs)
 [![Coverage Status](https://coveralls.io/repos/github/eldruin/xca9548a-rs/badge.svg?branch=master)](https://coveralls.io/github/eldruin/xca9548a-rs?branch=master)
-![Maintenance Intention](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
 This is a platform agnostic Rust driver for the for TCA9548A and PCA9548A I2C
 switches/multiplexers using the [`embedded-hal`] traits.
