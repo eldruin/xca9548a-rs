@@ -271,7 +271,7 @@ pub trait SelectChannels: private::Sealed {
     fn select_channels(&mut self, mask: u8) -> Result<(), Self::Error>;
 }
 
-/// Device driver
+/// Device driver for T/PCA9548A
 #[derive(Debug, Default)]
 pub struct Xca9548a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
@@ -343,7 +343,7 @@ where
     }
 }
 
-/// Device driver
+/// Device driver for T/PCA9543A
 #[derive(Debug, Default)]
 pub struct Xca9543a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
@@ -432,12 +432,12 @@ impl<I2C, E> Xca9543a<I2C>
     }
 }
 
-/// Device driver
-pub struct Xca9544a<I2C> {
+/// Device driver for T/PCA9545A
+pub struct Xca9545a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
 }
 
-impl<I2C> Xca9544a<I2C> {
+impl<I2C> Xca9545a<I2C> {
     /// Create new instance of the device
     pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
         let data = Xca954xaData {
@@ -445,7 +445,7 @@ impl<I2C> Xca9544a<I2C> {
             address: address.addr(DEVICE_BASE_ADDRESS),
             selected_channel_mask: 0,
         };
-        Xca9544a {
+        Xca9545a {
             data: cell::RefCell::new(data),
         }
     }
@@ -460,12 +460,12 @@ impl<I2C> Xca9544a<I2C> {
     /// It is not possible to know the compatibilities between channels
     /// so when talking to a split I2C device, only its channel
     /// will be selected.
-    pub fn split<'a>(&'a self) -> Parts4<'a, Xca9544a<I2C>, I2C> {
+    pub fn split<'a>(&'a self) -> Parts4<'a, Xca9545a<I2C>, I2C> {
         Parts4::new(&self)
     }
 }
 
-impl<I2C, E> Xca9544a<I2C>
+impl<I2C, E> Xca9545a<I2C>
     where
         I2C: i2c::Write<Error = E>,
 {
@@ -481,15 +481,15 @@ impl<I2C, E> Xca9544a<I2C>
     }
 }
 
-impl<I2C, E> Xca9544a<I2C>
+impl<I2C, E> Xca9545a<I2C>
     where
         I2C: i2c::Read<Error = E>,
 {
     /// Get status of channels.
     ///
     /// Each bit corresponds to a channel.
-    /// Bit 0 corresponds to channel 0 and so on up to bit 1 which
-    /// corresponds to channel 1.
+    /// Bit 0 corresponds to channel 0 and so on up to bit 3 which
+    /// corresponds to channel 3.
     /// A `0` means the channel is disabled and a `1` that the channel is enabled.
     pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
         let mut data = [0];
@@ -505,8 +505,8 @@ impl<I2C, E> Xca9544a<I2C>
     /// Get status of channel interrupts.
     ///
     /// Each bit corresponds to a channel.
-    /// Bit 0 corresponds to channel 0 and so on up to bit 1 which
-    /// corresponds to channel 1.
+    /// Bit 0 corresponds to channel 0 and so on up to bit 3 which
+    /// corresponds to channel 3.
     /// A `0` means the channel's interrupt is active and a `1` that the channel's interrupt is inactive.
     pub fn get_interrupt_status(&mut self) -> Result<u8, Error<E>> {
         let mut data = [0];
@@ -580,7 +580,7 @@ macro_rules! i2c_traits {
 }
 i2c_traits!(Xca9548a);
 i2c_traits!(Xca9543a);
-i2c_traits!(Xca9544a);
+i2c_traits!(Xca9545a);
 
 mod parts;
 pub use parts::{I2cSlave, Parts, Parts2, Parts4};
@@ -592,7 +592,7 @@ mod private {
     impl<I2C> Sealed for Xca954xaData<I2C> {}
     impl<I2C> Sealed for Xca9548a<I2C> {}
     impl<I2C> Sealed for Xca9543a<I2C> {}
-    impl<I2C> Sealed for Xca9544a<I2C> {}
+    impl<I2C> Sealed for Xca9545a<I2C> {}
     impl<'a, DEV, I2C> Sealed for Parts<'a, DEV, I2C> {}
     impl<'a, DEV, I2C> Sealed for Parts2<'a, DEV, I2C> {}
     impl<'a, DEV, I2C> Sealed for Parts4<'a, DEV, I2C> {}
