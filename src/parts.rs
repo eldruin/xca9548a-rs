@@ -6,19 +6,19 @@ use hal::blocking::i2c;
 pub struct I2cSlave<'a, DEV: 'a, I2C>(&'a DEV, u8, PhantomData<I2C>);
 
 macro_rules! parts {
-    ( $( $i2cx:ident, $channel:expr ),+ ) => {
+    ( $name:ident; $( $i2cx:ident, $channel:expr ),+ ) => {
 
         /// Slave I2C devices
-        pub struct Parts<'a, DEV:'a, I2C> {
+        pub struct $name<'a, DEV:'a, I2C> {
             $(
                 /// Slave I2C device
                 pub $i2cx: I2cSlave<'a, DEV, I2C>,
             )*
         }
 
-        impl<'a, DEV:'a, I2C> Parts<'a, DEV, I2C> {
+        impl<'a, DEV:'a, I2C> $name<'a, DEV, I2C> {
             pub(crate) fn new(dev: &'a DEV) -> Self {
-                Parts {
+                $name {
                     $(
                         $i2cx: I2cSlave(&dev, $channel, PhantomData),
                     )*
@@ -28,7 +28,13 @@ macro_rules! parts {
     }
 }
 parts!(
-    i2c0, 0x01, i2c1, 0x02, i2c2, 0x04, i2c3, 0x08, i2c4, 0x10, i2c5, 0x20, i2c6, 0x40, i2c7, 0x80
+    Parts; i2c0, 0x01, i2c1, 0x02, i2c2, 0x04, i2c3, 0x08, i2c4, 0x10, i2c5, 0x20, i2c6, 0x40, i2c7, 0x80
+);
+parts!(
+    Parts2; i2c0, 0x01, i2c1, 0x02
+);
+parts!(
+    Parts4; i2c0, 0x01, i2c1, 0x02, i2c2, 0x04, i2c3, 0x08
 );
 
 impl<'a, DEV, I2C, E> i2c::Write for I2cSlave<'a, DEV, I2C>
