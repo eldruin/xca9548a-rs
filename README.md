@@ -1,4 +1,4 @@
-# Rust TCA9548A and PCA9548A I2C Switch Driver
+# Rust TCA954xA and PCA954xA I2C Switch Driver
 
 [![crates.io](https://img.shields.io/crates/v/xca9548a.svg)](https://crates.io/crates/xca9548a)
 [![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a)
@@ -14,18 +14,27 @@ This driver allows you to:
 - Split the device into slave (virtual) I2C devices (one per channel). See: `split()`.
 
 ## The devices
-The TCA9548A and PCA9548 devices have eight bidirectional translating switches
+
+The TCA954xA and PCA954x devices have two to eight bidirectional translating switches
 that can be controlled through the I2C bus. The SCL/SDA upstream pair fans out
 to eight downstream pairs, or channels.
 Any individual SCn/SDn channel or combination of channels can be selected,
 determined by the contents of the programmable control register.
 These downstream channels can be used to resolve I2C slave address conflicts.
 For example, if  eight identical digital temperature sensors are needed in the
-application, one sensor can be connected at each channel: 0-7.
+application, one sensor can be connected at each channel: 0-N.
 
-Datasheets:
+The TCA9545/3A and PCA9545/3A devices have an assosciated interrupt pin `INT` for each channel 
+which can be polled to check which channels have pending interrupts.
+(Tip: Can also be used as general inputs)
+
+### Datasheets
 - [TCA9548A](http://www.ti.com/lit/ds/symlink/tca9548a.pdf)
 - [PCA9548A](http://www.ti.com/lit/ds/symlink/pca9548a.pdf)
+- [TCA9545A](http://www.ti.com/lit/ds/symlink/tca9545a.pdf)
+- [PCA9545A](http://www.ti.com/lit/ds/symlink/pca9545a.pdf)
+- [TCA9543A](http://www.ti.com/lit/ds/symlink/tca9543a.pdf)
+- [PCA9543A](http://www.ti.com/lit/ds/symlink/pca9543a.pdf)
 
 ## Usage
 
