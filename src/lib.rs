@@ -219,7 +219,7 @@ pub enum SlaveAddr {
     /// Default slave address
     Default,
     /// Alternative slave address providing bit values for A2, A1 and A0
-    /// Note: Some devices might not have all Ax pins.
+    /// Note: Some devices does not have all Ax pins, these should be set to false.
     Alternative(bool, bool, bool),
 }
 
