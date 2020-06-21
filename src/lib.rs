@@ -1,5 +1,5 @@
-//! This is a platform agnostic Rust driver for the TCA9548A and
-//! PCA9548A I2C switches/multiplexers, based on the [`embedded-hal`] traits.
+//! This is a platform agnostic Rust driver for the TCA954xA and
+//! PCA954xA I2C switches/multiplexers, based on the [`embedded-hal`] traits.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //!
@@ -13,18 +13,26 @@
 //!
 //! ## The devices
 //!
-//! The TCA9548A and PCA9548 devices have eight bidirectional translating switches
+//! The TCA954xA and PCA954x devices have two to eight bidirectional translating switches
 //! that can be controlled through the I2C bus. The SCL/SDA upstream pair fans out
 //! to eight downstream pairs, or channels.
 //! Any individual SCn/SDn channel or combination of channels can be selected,
 //! determined by the contents of the programmable control register.
 //! These downstream channels can be used to resolve I2C slave address conflicts.
 //! For example, if  eight identical digital temperature sensors are needed in the
-//! application, one sensor can be connected at each channel: 0-7.
+//! application, one sensor can be connected at each channel: 0-N.
+//!
+//! The TCA9545/3A and PCA9545/3A devices have an assosciated interrupt pin `INT` for each channel
+//! which can be polled to check which channels have pending interrupts.
+//! (Tip: Can also be used as general inputs)
 //!
 //! ### Datasheets
 //! - [TCA9548A](http://www.ti.com/lit/ds/symlink/tca9548a.pdf)
 //! - [PCA9548A](http://www.ti.com/lit/ds/symlink/pca9548a.pdf)
+//! - [TCA9545A](http://www.ti.com/lit/ds/symlink/tca9545a.pdf)
+//! - [PCA9545A](http://www.ti.com/lit/ds/symlink/pca9545a.pdf)
+//! - [TCA9543A](http://www.ti.com/lit/ds/symlink/tca9543a.pdf)
+//! - [PCA9543A](http://www.ti.com/lit/ds/symlink/pca9543a.pdf)
 //!
 //! ## Usage examples (see also examples folder)
 //!
@@ -211,6 +219,7 @@ pub enum SlaveAddr {
     /// Default slave address
     Default,
     /// Alternative slave address providing bit values for A2, A1 and A0
+    /// Note: Some devices does not have all Ax pins, these should be set to false.
     Alternative(bool, bool, bool),
 }
 
@@ -235,7 +244,7 @@ const DEVICE_BASE_ADDRESS: u8 = 0b111_0000;
 
 #[doc(hidden)]
 #[derive(Debug, Default)]
-pub struct Xca9548aData<I2C> {
+pub struct Xca954xaData<I2C> {
     /// The concrete I²C device implementation.
     pub(crate) i2c: I2C,
     /// The I²C device address.
@@ -243,7 +252,7 @@ pub struct Xca9548aData<I2C> {
     pub(crate) selected_channel_mask: u8,
 }
 
-impl<I2C, E> SelectChannels for Xca9548aData<I2C>
+impl<I2C, E> SelectChannels for Xca954xaData<I2C>
 where
     I2C: i2c::Write<Error = E>,
 {
@@ -261,7 +270,7 @@ where
 pub trait DoOnAcquired<I2C>: private::Sealed {
     fn do_on_acquired<R, E>(
         &self,
-        f: impl FnOnce(cell::RefMut<Xca9548aData<I2C>>) -> Result<R, Error<E>>,
+        f: impl FnOnce(cell::RefMut<Xca954xaData<I2C>>) -> Result<R, Error<E>>,
     ) -> Result<R, Error<E>>;
 }
 
@@ -271,143 +280,240 @@ pub trait SelectChannels: private::Sealed {
     fn select_channels(&mut self, mask: u8) -> Result<(), Self::Error>;
 }
 
-/// Device driver
+/// Device driver for T/PCA9548A
 #[derive(Debug, Default)]
 pub struct Xca9548a<I2C> {
-    pub(crate) data: cell::RefCell<Xca9548aData<I2C>>,
+    pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
 }
 
-impl<I2C> Xca9548a<I2C> {
-    /// Create new instance of the device
-    pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
-        let data = Xca9548aData {
-            i2c,
-            address: address.addr(DEVICE_BASE_ADDRESS),
-            selected_channel_mask: 0,
-        };
-        Xca9548a {
-            data: cell::RefCell::new(data),
+/// Device driver for T/PCA9543A
+#[derive(Debug, Default)]
+pub struct Xca9543a<I2C> {
+    pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
+}
+
+/// Device driver for T/PCA9545A
+pub struct Xca9545a<I2C> {
+    pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
+}
+
+macro_rules! i2c_traits {
+    ( $name:ident ) => {
+        impl<I2C> DoOnAcquired<I2C> for $name<I2C> {
+            fn do_on_acquired<R, E>(
+                &self,
+                f: impl FnOnce(cell::RefMut<Xca954xaData<I2C>>) -> Result<R, Error<E>>,
+            ) -> Result<R, Error<E>> {
+                let dev = self
+                    .data
+                    .try_borrow_mut()
+                    .map_err(|_| Error::CouldNotAcquireDevice)?;
+                f(dev)
+            }
+        }
+
+        impl<I2C, E> i2c::Write for $name<I2C>
+        where
+            I2C: i2c::Write<Error = E>,
+        {
+            type Error = Error<E>;
+
+            fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
+                self.do_on_acquired(|mut dev| dev.i2c.write(address, bytes).map_err(Error::I2C))
+            }
+        }
+
+        impl<I2C, E> i2c::Read for $name<I2C>
+        where
+            I2C: i2c::Read<Error = E>,
+        {
+            type Error = Error<E>;
+
+            fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+                self.do_on_acquired(|mut dev| dev.i2c.read(address, buffer).map_err(Error::I2C))
+            }
+        }
+
+        impl<I2C, E> i2c::WriteRead for $name<I2C>
+        where
+            I2C: i2c::WriteRead<Error = E>,
+        {
+            type Error = Error<E>;
+
+            fn write_read(
+                &mut self,
+                address: u8,
+                bytes: &[u8],
+                buffer: &mut [u8],
+            ) -> Result<(), Self::Error> {
+                self.do_on_acquired(|mut dev| {
+                    dev.i2c
+                        .write_read(address, bytes, buffer)
+                        .map_err(Error::I2C)
+                })
+            }
         }
     }
+}
 
-    /// Destroy driver instance, return I²C bus instance.
-    pub fn destroy(self) -> I2C {
-        self.data.into_inner().i2c
-    }
+macro_rules! impl_device {
+    ( $name:ident, $parts:ident ) => {
+        impl<I2C> $name<I2C> {
+            /// Create new instance of the device
+            pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
+                let data = Xca954xaData {
+                    i2c,
+                    address: address.addr(DEVICE_BASE_ADDRESS),
+                    selected_channel_mask: 0,
+                };
+                $name {
+                    data: cell::RefCell::new(data),
+                }
+            }
 
-    /// Split device into individual I2C devices
-    ///
-    /// It is not possible to know the compatibilities between channels
-    /// so when talking to a split I2C device, only its channel
-    /// will be selected.
-    pub fn split<'a>(&'a self) -> Parts<'a, Xca9548a<I2C>, I2C> {
-        Parts::new(&self)
+            /// Destroy driver instance, return I²C bus instance.
+            pub fn destroy(self) -> I2C {
+                self.data.into_inner().i2c
+            }
+
+            /// Split device into individual I2C devices
+            ///
+            /// It is not possible to know the compatibilities between channels
+            /// so when talking to a split I2C device, only its channel
+            /// will be selected.
+            pub fn split<'a>(&'a self) -> $parts<'a, $name<I2C>, I2C> {
+                $parts::new(&self)
+            }
+        }
+
+    };
+    ( $name:ident, $parts:ident, no_interrupts ) => {
+        impl_device!($name, $parts);
+
+        impl<I2C, E> $name<I2C>
+        where
+            I2C: i2c::Read<Error = E>,
+        {
+            /// Get status of channels.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
+            /// corresponds to channel 7.
+            /// A `0` means the channel is disabled and a `1` that the channel is enabled.
+            pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+                let mut data = [0];
+                self.do_on_acquired(|mut dev| {
+                    let address = dev.address;
+                    dev.i2c
+                        .read(address, &mut data)
+                        .map_err(Error::I2C)
+                        .and(Ok(data[0]))
+                })
+            }
+        }
+
+
+        impl<I2C, E> $name<I2C>
+        where
+            I2C: i2c::Write<Error = E>,
+        {
+            /// Select which channels are enabled.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
+            /// corresponds to channel 7.
+            /// A `0` disables the channel and a `1` enables it.
+            /// Several channels can be enabled at the same time
+            pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
+                self.do_on_acquired(|mut dev| dev.select_channels(channels))
+            }
+        }
+    };
+    ( $name:ident, $parts:ident, $mask:expr, interrupts ) => {
+        impl_device!($name, $parts);
+
+        impl<I2C, E> $name<I2C>
+        where
+            I2C: i2c::Read<Error = E>,
+        {
+            /// Get status of channels.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0, bit 1 to channel 1 and so on.
+            /// A `0` means the channel is disabled and a `1` that the channel is enabled.
+            pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+                let mut data = [0];
+                self.do_on_acquired(|mut dev| {
+                    let address = dev.address;
+                    dev.i2c
+                        .read(address, &mut data)
+                        .map_err(Error::I2C)
+                        .and(Ok(data[0] & $mask))
+                })
+            }
+
+            /// Get status of channel interrupts.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0, bit 1 to channel 1 and so on.
+            /// A `1` means the channel's interrupt is high and a `0` that the channel's interrupt is low.
+            /// Note: I2C interrupts are usually active LOW!
+            pub fn get_interrupt_status(&mut self) -> Result<u8, Error<E>> {
+                let mut data = [0];
+                self.do_on_acquired(|mut dev| {
+                    let address = dev.address;
+                    dev.i2c
+                        .read(address, &mut data)
+                        .map_err(Error::I2C)
+                        .and(Ok((data[0] >> 4) & $mask))
+                })
+            }
+        }
+
+        impl<I2C, E> $name<I2C>
+        where
+            I2C: i2c::Write<Error = E>,
+        {
+            /// Select which channels are enabled.
+            ///
+            /// Each bit corresponds to a channel.
+            /// Bit 0 corresponds to channel 0, bit 1 to channel 1 and so on.
+            /// A `0` disables the channel and a `1` enables it.
+            /// Several channels can be enabled at the same time.
+            ///
+            /// Channels/bits that does not exist for the specific device are ignored.
+            pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
+                self.do_on_acquired(|mut dev| dev.select_channels(channels & $mask))
+            }
+        }
+
     }
 }
 
-impl<I2C> DoOnAcquired<I2C> for Xca9548a<I2C> {
-    fn do_on_acquired<R, E>(
-        &self,
-        f: impl FnOnce(cell::RefMut<Xca9548aData<I2C>>) -> Result<R, Error<E>>,
-    ) -> Result<R, Error<E>> {
-        let dev = self
-            .data
-            .try_borrow_mut()
-            .map_err(|_| Error::CouldNotAcquireDevice)?;
-        f(dev)
-    }
-}
+impl_device!(Xca9548a, Parts, no_interrupts);
+i2c_traits!(Xca9548a);
 
-impl<I2C, E> Xca9548a<I2C>
-where
-    I2C: i2c::Write<Error = E>,
-{
-    /// Select which channels are enabled.
-    ///
-    /// Each bit corresponds to a channel.
-    /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
-    /// corresponds to channel 7.
-    /// A `0` disables the channel and a `1` enables it.
-    /// Several channels can be enabled at the same time
-    pub fn select_channels(&mut self, channels: u8) -> Result<(), Error<E>> {
-        self.do_on_acquired(|mut dev| dev.select_channels(channels))
-    }
-}
+impl_device!(Xca9543a, Parts2, 0x03, interrupts);
+i2c_traits!(Xca9543a);
 
-impl<I2C, E> Xca9548a<I2C>
-where
-    I2C: i2c::Read<Error = E>,
-{
-    /// Get status of channels.
-    ///
-    /// Each bit corresponds to a channel.
-    /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
-    /// corresponds to channel 7.
-    /// A `0` means the channel is disabled and a `1` that the channel is enabled.
-    pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
-        let mut data = [0];
-        self.do_on_acquired(|mut dev| {
-            let address = dev.address;
-            dev.i2c
-                .read(address, &mut data)
-                .map_err(Error::I2C)
-                .and(Ok(data[0]))
-        })
-    }
-}
+impl_device!(Xca9545a, Parts4, 0x0f, interrupts);
+i2c_traits!(Xca9545a);
 
-impl<I2C, E> i2c::Write for Xca9548a<I2C>
-where
-    I2C: i2c::Write<Error = E>,
-{
-    type Error = Error<E>;
-
-    fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-        self.do_on_acquired(|mut dev| dev.i2c.write(address, bytes).map_err(Error::I2C))
-    }
-}
-
-impl<I2C, E> i2c::Read for Xca9548a<I2C>
-where
-    I2C: i2c::Read<Error = E>,
-{
-    type Error = Error<E>;
-
-    fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-        self.do_on_acquired(|mut dev| dev.i2c.read(address, buffer).map_err(Error::I2C))
-    }
-}
-
-impl<I2C, E> i2c::WriteRead for Xca9548a<I2C>
-where
-    I2C: i2c::WriteRead<Error = E>,
-{
-    type Error = Error<E>;
-
-    fn write_read(
-        &mut self,
-        address: u8,
-        bytes: &[u8],
-        buffer: &mut [u8],
-    ) -> Result<(), Self::Error> {
-        self.do_on_acquired(|mut dev| {
-            dev.i2c
-                .write_read(address, bytes, buffer)
-                .map_err(Error::I2C)
-        })
-    }
-}
 
 mod parts;
-pub use parts::{I2cSlave, Parts};
+pub use parts::{I2cSlave, Parts, Parts2, Parts4};
 
 mod private {
     use super::*;
 
     pub trait Sealed {}
-    impl<I2C> Sealed for Xca9548aData<I2C> {}
+    impl<I2C> Sealed for Xca954xaData<I2C> {}
     impl<I2C> Sealed for Xca9548a<I2C> {}
+    impl<I2C> Sealed for Xca9543a<I2C> {}
+    impl<I2C> Sealed for Xca9545a<I2C> {}
     impl<'a, DEV, I2C> Sealed for Parts<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for Parts2<'a, DEV, I2C> {}
+    impl<'a, DEV, I2C> Sealed for Parts4<'a, DEV, I2C> {}
     impl<'a, DEV, I2C> Sealed for I2cSlave<'a, DEV, I2C> {}
 }
 

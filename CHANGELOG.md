@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-...
+### Added
+- Support for T/PCA9545A and T/PCA9543A in the same family.
 
 ## [0.2.0] - 2019-10-03
 
