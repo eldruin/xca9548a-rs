@@ -1,4 +1,3 @@
-use embedded_hal::prelude::*;
 use embedded_hal_mock::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 use xca9548a::{SlaveAddr, Xca9543a, Xca9545a, Xca9548a};
 
@@ -160,11 +159,15 @@ macro_rules! test_device {
 
 mod test_xca9548a {
     use super::*;
+    use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+
     test_device!(Xca9548a, 0xff);
 }
 
 mod test_xca9545a {
     use super::*;
+    use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+
     test_device!(Xca9545a, 0x0f);
     test_interrupt!(Xca9545a, 0x0f);
     test_ch_out_of_range!(Xca9545a, 0x0f);
@@ -172,6 +175,8 @@ mod test_xca9545a {
 
 mod test_xca9543a {
     use super::*;
+    use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+
     test_device!(Xca9543a, 0x03);
     test_interrupt!(Xca9543a, 0x03);
     test_ch_out_of_range!(Xca9543a, 0x03);
