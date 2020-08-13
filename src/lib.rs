@@ -353,7 +353,7 @@ macro_rules! i2c_traits {
                 })
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_device {
@@ -385,7 +385,6 @@ macro_rules! impl_device {
                 $parts::new(&self)
             }
         }
-
     };
     ( $name:ident, $parts:ident, no_interrupts ) => {
         impl_device!($name, $parts);
@@ -411,7 +410,6 @@ macro_rules! impl_device {
                 })
             }
         }
-
 
         impl<I2C, E> $name<I2C>
         where
@@ -486,8 +484,7 @@ macro_rules! impl_device {
                 self.do_on_acquired(|mut dev| dev.select_channels(channels & $mask))
             }
         }
-
-    }
+    };
 }
 
 impl_device!(Xca9548a, Parts, no_interrupts);
@@ -498,7 +495,6 @@ i2c_traits!(Xca9543a);
 
 impl_device!(Xca9545a, Parts4, 0x0f, interrupts);
 i2c_traits!(Xca9545a);
-
 
 mod parts;
 pub use parts::{I2cSlave, Parts, Parts2, Parts4};

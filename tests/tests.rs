@@ -2,7 +2,7 @@ extern crate embedded_hal;
 extern crate embedded_hal_mock as hal;
 use hal::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 extern crate xca9548a;
-use xca9548a::{SlaveAddr, Xca9548a, Xca9543a, Xca9545a};
+use xca9548a::{SlaveAddr, Xca9543a, Xca9545a, Xca9548a};
 
 const DEV_ADDR: u8 = 0b111_0000;
 
@@ -13,21 +13,22 @@ const SLAVE_READ_DATA: [u8; 2] = [0b1001_1001, 0b0110_0110];
 
 macro_rules! test_interrupt {
     ( $name:ident, $channels:expr ) => {
-
         #[test]
         fn can_get_interrupt_status() {
-            let transactions = [I2cTrans::read(DEV_ADDR, vec![0b1010_0000 & ($channels << 4)])];
+            let transactions = [I2cTrans::read(
+                DEV_ADDR,
+                vec![0b1010_0000 & ($channels << 4)],
+            )];
             let mut switch = new(&transactions);
             let read_status = switch.get_interrupt_status().unwrap();
             assert_eq!(0b0000_1010 & $channels, read_status);
             switch.destroy().done();
         }
-    }
+    };
 }
 
 macro_rules! test_ch_out_of_range {
     ( $name:ident, $channel:expr ) => {
-
         #[test]
         fn ignore_ch_out_of_range() {
             let transactions = [I2cTrans::write(DEV_ADDR, vec![0x01])];
@@ -35,16 +36,14 @@ macro_rules! test_ch_out_of_range {
             switch.select_channels(0b1000_0001).unwrap();
             switch.destroy().done();
         }
-    }
+    };
 }
 
 macro_rules! test_device {
     ( $name:ident, $channels:expr ) => {
-
         fn new(transactions: &[I2cTrans]) -> $name<I2cMock> {
             $name::new(I2cMock::new(&transactions), SlaveAddr::default())
         }
-
 
         #[test]
         fn can_select_channels() {
@@ -159,7 +158,7 @@ macro_rules! test_device {
             }
             switch.destroy().done();
         }
-    }
+    };
 }
 
 mod test_xca9548a {
@@ -180,4 +179,3 @@ mod test_xca9543a {
     test_interrupt!(Xca9543a, 0x03);
     test_ch_out_of_range!(Xca9543a, 0x03);
 }
-
