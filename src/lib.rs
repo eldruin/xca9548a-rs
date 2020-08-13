@@ -49,64 +49,44 @@
 //! the device:
 //!
 //! ```no_run
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
-//! use hal::I2cdev;
+//! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
-//! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let mut i2c_switch = Xca9548a::new(dev, address);
-//! # }
 //! ```
 //!
 //! ### Providing an alternative address
 //!
 //! ```no_run
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
-//! use hal::I2cdev;
+//! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
-//! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let (a2, a1, a0) = (false, false, true);
 //! let address = SlaveAddr::Alternative(a2, a1, a0);
 //! let mut i2c_switch = Xca9548a::new(dev, address);
-//! # }
 //! ```
 //!
 //! ### Selecting channel 0 (SD0/SC0 pins)
 //!
 //! ```no_run
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
-//! use hal::I2cdev;
+//! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
-//! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let mut i2c_switch = Xca9548a::new(dev, address);
 //! i2c_switch.select_channels(0b0000_0001).unwrap();
-//! # }
 //! ```
 //! ### Reading and writing to device connected to channel 0 (SD0/SC0 pins)
 //!
 //! ```no_run
-//! extern crate embedded_hal;
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
-//! use hal::I2cdev;
 //! use embedded_hal::blocking::i2c::{ Read, Write };
-//! use xca9548a::{ Xca9548a, SlaveAddr };
+//! use linux_embedded_hal::I2cdev;
+//! use xca9548a::{Xca9548a, SlaveAddr};
 //!
-//! # fn main() {
 //! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let mut i2c_switch = Xca9548a::new(dev, address);
@@ -122,7 +102,6 @@
 //!
 //! // Write some data to the slave
 //! i2c_switch.write(slave_address, &data_for_slave).unwrap();
-//! # }
 //! ```
 //!
 //! ### Splitting into individual I2C devices and passing them into drivers
@@ -132,11 +111,8 @@
 //! Switching will be done automatically as necessary.
 //!
 //! ```no_run
-//! extern crate embedded_hal;
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
 //! use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+//! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
 //! /// Some driver defined in a different crate.
@@ -152,15 +128,13 @@
 //!     }
 //! }
 //!
-//! # fn main() {
-//! let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
+//! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let i2c_switch = Xca9548a::new(dev, address);
 //! let parts = i2c_switch.split();
 //!
 //! let my_driver = Driver::new(parts.i2c0);
 //! let my_other_driver = Driver::new(parts.i2c1);
-//! # }
 //! ```
 //!
 //! ### Splitting into individual I2C devices
@@ -169,15 +143,11 @@
 //! Switching will be done automatically as necessary.
 //!
 //! ```no_run
-//! extern crate embedded_hal;
-//! extern crate linux_embedded_hal as hal;
-//! extern crate xca9548a;
-//!
 //! use embedded_hal::blocking::i2c::{ Read, Write };
-//! use xca9548a::{ Xca9548a, SlaveAddr };
+//! use linux_embedded_hal::I2cdev;
+//! use xca9548a::{Xca9548a, SlaveAddr};
 //!
-//! # fn main() {
-//! let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
+//! let dev = I2cdev::new("/dev/i2c-1").unwrap();
 //! let address = SlaveAddr::default();
 //! let i2c_switch = Xca9548a::new(dev, address);
 //! let mut parts = i2c_switch.split();
@@ -191,18 +161,15 @@
 //! // Read some data from a slave connected to channel 1
 //! let mut read_data = [0; 2];
 //! parts.i2c1.read(slave_address, &mut read_data).unwrap();
-//! # }
 //! ```
-
 //!
 
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
 #![no_std]
 
-extern crate embedded_hal as hal;
 use core::cell;
-use hal::blocking::i2c;
+use embedded_hal::blocking::i2c;
 
 /// All possible errors in this crate
 #[derive(Debug)]
@@ -497,7 +464,7 @@ impl_device!(Xca9545a, Parts4, 0x0f, interrupts);
 i2c_traits!(Xca9545a);
 
 mod parts;
-pub use parts::{I2cSlave, Parts, Parts2, Parts4};
+pub use crate::parts::{I2cSlave, Parts, Parts2, Parts4};
 
 mod private {
     use super::*;

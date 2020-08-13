@@ -1,12 +1,9 @@
-extern crate embedded_hal;
-extern crate embedded_hal_mock as hal;
-use hal::i2c::{Mock as I2cMock, Transaction as I2cTrans};
-extern crate xca9548a;
+use embedded_hal::prelude::*;
+use embedded_hal_mock::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 use xca9548a::{SlaveAddr, Xca9543a, Xca9545a, Xca9548a};
 
 const DEV_ADDR: u8 = 0b111_0000;
 
-use embedded_hal::prelude::*;
 const SLAVE_ADDR: u8 = 0b010_0000;
 const SLAVE_WRITE_DATA: [u8; 2] = [0b0101_0101, 0b1010_1010];
 const SLAVE_READ_DATA: [u8; 2] = [0b1001_1001, 0b0110_0110];

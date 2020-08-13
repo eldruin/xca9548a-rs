@@ -1,6 +1,6 @@
-use super::{DoOnAcquired, Error, SelectChannels};
+use crate::{DoOnAcquired, Error, SelectChannels};
 use core::marker::PhantomData;
-use hal::blocking::i2c;
+use embedded_hal::blocking::i2c;
 
 /// Slave I2C device
 pub struct I2cSlave<'a, DEV: 'a, I2C>(&'a DEV, u8, PhantomData<I2C>);

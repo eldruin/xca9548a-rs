@@ -10,6 +10,7 @@ keywords = ["i2c", "switch", "driver", "embedded-hal-driver"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/eldruin/xca9548a-rs"
 documentation = "https://docs.rs/xca9548a"
+edition = "2018"
 
 include = [
     "/**/*.rs",
