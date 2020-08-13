@@ -42,7 +42,7 @@ macro_rules! test_ch_out_of_range {
 macro_rules! test_device {
     ( $name:ident, $channels:expr ) => {
         fn new(transactions: &[I2cTrans]) -> $name<I2cMock> {
-            $name::new(I2cMock::new(&transactions), SlaveAddr::default())
+            $name::new(I2cMock::new(transactions), SlaveAddr::default())
         }
 
         #[test]

@@ -28,8 +28,8 @@ coveralls = { repository = "eldruin/xca9548a-rs", branch = "master", service = "
 embedded-hal = "0.2"
 
 [dev-dependencies]
-linux-embedded-hal = "0.2"
-embedded-hal-mock = "0.4"
+linux-embedded-hal = "0.3"
+embedded-hal-mock = "0.7"
 
 [profile.release]
 lto = true
