@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/xca9548a.svg)](https://crates.io/crates/xca9548a)
 [![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a)
-[![Build Status](https://travis-ci.org/eldruin/xca9548a-rs.svg?branch=master)](https://travis-ci.org/eldruin/xca9548a-rs)
+[![Build Status](https://github.com/eldruin/xca9548a-rs/workflows/Build/badge.svg)](https://github.com/eldruin/xca9548a-rs/actions?query=workflow%3ABuild)
 [![Coverage Status](https://coveralls.io/repos/github/eldruin/xca9548a-rs/badge.svg?branch=master)](https://coveralls.io/github/eldruin/xca9548a-rs?branch=master)
 
 This is a platform agnostic Rust driver for the for TCA9548A and PCA9548A I2C
@@ -24,7 +24,7 @@ These downstream channels can be used to resolve I2C slave address conflicts.
 For example, if  eight identical digital temperature sensors are needed in the
 application, one sensor can be connected at each channel: 0-N.
 
-The TCA9545/3A and PCA9545/3A devices have an assosciated interrupt pin `INT` for each channel 
+The TCA9545/3A and PCA9545/3A devices have an assosciated interrupt pin `INT` for each channel
 which can be polled to check which channels have pending interrupts.
 (Tip: Can also be used as general inputs)
 
