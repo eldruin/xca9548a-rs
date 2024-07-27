@@ -83,7 +83,7 @@
 //! ### Reading and writing to device connected to channel 0 (SD0/SC0 pins)
 //!
 //! ```no_run
-//! use embedded_hal::blocking::i2c::{ Read, Write };
+//! use embedded_hal::i2c::I2c;
 //! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
@@ -111,7 +111,7 @@
 //! Switching will be done automatically as necessary.
 //!
 //! ```no_run
-//! use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+//! use embedded_hal::i2c::I2c;
 //! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
@@ -122,7 +122,7 @@
 //! }
 //!
 //! impl<I2C, E> Driver<I2C>
-//! where I2C: Write<Error = E> + Read<Error = E> + WriteRead<Error = E> {
+//! where I2C: I2c<Error = E> {
 //!     pub fn new(i2c: I2C) -> Self {
 //!         Driver { i2c }
 //!     }
@@ -143,7 +143,7 @@
 //! Switching will be done automatically as necessary.
 //!
 //! ```no_run
-//! use embedded_hal::blocking::i2c::{ Read, Write };
+//! use embedded_hal::i2c::I2c;
 //! use linux_embedded_hal::I2cdev;
 //! use xca9548a::{Xca9548a, SlaveAddr};
 //!
@@ -169,11 +169,11 @@
 #![no_std]
 
 use core::cell;
-use embedded_hal::blocking::i2c;
+use embedded_hal::i2c as ehal;
 
 /// All possible errors in this crate
 #[derive(Debug)]
-pub enum Error<E> {
+pub enum Error<E: core::fmt::Debug> {
     /// I²C bus error
     I2C(E),
     /// Could not acquire device. Maybe it is already acquired.
@@ -221,7 +221,8 @@ pub struct Xca954xaData<I2C> {
 
 impl<I2C, E> SelectChannels for Xca954xaData<I2C>
 where
-    I2C: i2c::Write<Error = E>,
+    I2C: ehal::I2c<Error = E>,
+    E: core::fmt::Debug,
 {
     type Error = Error<E>;
     fn select_channels(&mut self, channels: u8) -> Result<(), Self::Error> {
@@ -235,7 +236,7 @@ where
 
 #[doc(hidden)]
 pub trait DoOnAcquired<I2C>: private::Sealed {
-    fn do_on_acquired<R, E>(
+    fn do_on_acquired<R, E: ehal::Error>(
         &self,
         f: impl FnOnce(cell::RefMut<Xca954xaData<I2C>>) -> Result<R, Error<E>>,
     ) -> Result<R, Error<E>>;
@@ -260,14 +261,27 @@ pub struct Xca9543a<I2C> {
 }
 
 /// Device driver for T/PCA9545A
+#[derive(Debug, Default)]
 pub struct Xca9545a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
+}
+
+impl<E> ehal::Error for Error<E>
+where
+    E: ehal::Error,
+{
+    fn kind(&self) -> ehal::ErrorKind {
+        match self {
+            Error::I2C(e) => e.kind(),
+            Error::CouldNotAcquireDevice => ehal::ErrorKind::Other,
+        }
+    }
 }
 
 macro_rules! i2c_traits {
     ( $name:ident ) => {
         impl<I2C> DoOnAcquired<I2C> for $name<I2C> {
-            fn do_on_acquired<R, E>(
+            fn do_on_acquired<R, E: ehal::Error>(
                 &self,
                 f: impl FnOnce(cell::RefMut<Xca954xaData<I2C>>) -> Result<R, Error<E>>,
             ) -> Result<R, Error<E>> {
@@ -279,44 +293,45 @@ macro_rules! i2c_traits {
             }
         }
 
-        impl<I2C, E> i2c::Write for $name<I2C>
+        impl<I2C, E> ehal::ErrorType for $name<I2C>
         where
-            I2C: i2c::Write<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
             type Error = Error<E>;
-
-            fn write(&mut self, address: u8, bytes: &[u8]) -> Result<(), Self::Error> {
-                self.do_on_acquired(|mut dev| dev.i2c.write(address, bytes).map_err(Error::I2C))
-            }
         }
 
-        impl<I2C, E> i2c::Read for $name<I2C>
+        impl<I2C, E> ehal::I2c for $name<I2C>
         where
-            I2C: i2c::Read<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
-            type Error = Error<E>;
-
-            fn read(&mut self, address: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
-                self.do_on_acquired(|mut dev| dev.i2c.read(address, buffer).map_err(Error::I2C))
+            fn transaction(
+                &mut self,
+                address: u8,
+                operations: &mut [ehal::Operation<'_>],
+            ) -> Result<(), Error<E>> {
+                self.do_on_acquired(|mut dev| {
+                    dev.i2c.transaction(address, operations).map_err(Error::I2C)
+                })
             }
-        }
 
-        impl<I2C, E> i2c::WriteRead for $name<I2C>
-        where
-            I2C: i2c::WriteRead<Error = E>,
-        {
-            type Error = Error<E>;
+            fn read(&mut self, address: u8, read: &mut [u8]) -> Result<(), Self::Error> {
+                self.do_on_acquired(|mut dev| dev.i2c.read(address, read).map_err(Error::I2C))
+            }
+
+            fn write(&mut self, address: u8, write: &[u8]) -> Result<(), Self::Error> {
+                self.do_on_acquired(|mut dev| dev.i2c.write(address, write).map_err(Error::I2C))
+            }
 
             fn write_read(
                 &mut self,
                 address: u8,
-                bytes: &[u8],
-                buffer: &mut [u8],
+                write: &[u8],
+                read: &mut [u8],
             ) -> Result<(), Self::Error> {
                 self.do_on_acquired(|mut dev| {
-                    dev.i2c
-                        .write_read(address, bytes, buffer)
-                        .map_err(Error::I2C)
+                    dev.i2c.write_read(address, write, read).map_err(Error::I2C)
                 })
             }
         }
@@ -358,7 +373,8 @@ macro_rules! impl_device {
 
         impl<I2C, E> $name<I2C>
         where
-            I2C: i2c::Read<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
             /// Get status of channels.
             ///
@@ -380,7 +396,8 @@ macro_rules! impl_device {
 
         impl<I2C, E> $name<I2C>
         where
-            I2C: i2c::Write<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
             /// Select which channels are enabled.
             ///
@@ -399,7 +416,8 @@ macro_rules! impl_device {
 
         impl<I2C, E> $name<I2C>
         where
-            I2C: i2c::Read<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
             /// Get status of channels.
             ///
@@ -437,7 +455,8 @@ macro_rules! impl_device {
 
         impl<I2C, E> $name<I2C>
         where
-            I2C: i2c::Write<Error = E>,
+            I2C: ehal::I2c<Error = E>,
+            E: ehal::Error,
         {
             /// Select which channels are enabled.
             ///
