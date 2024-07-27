@@ -1,3 +1,4 @@
+use embedded_hal::i2c::Operation;
 use embedded_hal_mock::eh1::i2c::{Mock as I2cMock, Transaction as I2cTrans};
 use xca9548a::{SlaveAddr, Xca9543a, Xca9545a, Xca9548a};
 
@@ -84,6 +85,24 @@ macro_rules! test_device {
             assert_eq!(read_data, SLAVE_READ_DATA);
             switch.destroy().done();
         }
+
+        #[test]
+        fn can_do_transaction_from_slave() {
+            let transactions = [
+                I2cTrans::write(DEV_ADDR, vec![0x01]),
+                I2cTrans::transaction_start(SLAVE_ADDR),
+                I2cTrans::write(SLAVE_ADDR, SLAVE_WRITE_DATA.to_vec()),
+                I2cTrans::transaction_end(SLAVE_ADDR),
+            ];
+            let mut switch = new(&transactions);
+            switch.select_channels(0b0000_0001).unwrap();
+
+            switch
+                .transaction(SLAVE_ADDR, &mut [Operation::Write(&SLAVE_WRITE_DATA)])
+                .unwrap();
+            switch.destroy().done();
+        }
+
         #[test]
         fn can_write_read_from_slave() {
             let transactions = [
@@ -119,6 +138,9 @@ macro_rules! test_device {
                     SLAVE_WRITE_DATA.to_vec(),
                     slave_read_data_2.to_vec(),
                 ),
+                I2cTrans::transaction_start(SLAVE_ADDR),
+                I2cTrans::write(SLAVE_ADDR, SLAVE_WRITE_DATA.to_vec()),
+                I2cTrans::transaction_end(SLAVE_ADDR),
             ];
             let switch = new(&transactions);
             {
@@ -130,6 +152,10 @@ macro_rules! test_device {
                 parts
                     .i2c0
                     .write_read(SLAVE_ADDR, &SLAVE_WRITE_DATA, &mut read_data_2)
+                    .unwrap();
+                parts
+                    .i2c0
+                    .transaction(SLAVE_ADDR, &mut [Operation::Write(&SLAVE_WRITE_DATA)])
                     .unwrap();
                 assert_eq!(read_data_1, SLAVE_READ_DATA);
                 assert_eq!(read_data_2, slave_read_data_2);
