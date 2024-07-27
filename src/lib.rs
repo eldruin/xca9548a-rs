@@ -349,7 +349,7 @@ macro_rules! impl_device {
             /// It is not possible to know the compatibilities between channels
             /// so when talking to a split I2C device, only its channel
             /// will be selected.
-            pub fn split<'a>(&'a self) -> $parts<'a, $name<I2C>, I2C> {
+            pub fn split(&self) -> $parts<$name<I2C>, I2C> {
                 $parts::new(&self)
             }
         }
