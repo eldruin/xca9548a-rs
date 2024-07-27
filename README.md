@@ -2,6 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/xca9548a.svg)](https://crates.io/crates/xca9548a)
 [![Docs](https://docs.rs/xca9548a/badge.svg)](https://docs.rs/xca9548a)
+![MSRV](https://img.shields.io/badge/rustc-1.62+-blue.svg)
 [![Build Status](https://github.com/eldruin/xca9548a-rs/workflows/Build/badge.svg)](https://github.com/eldruin/xca9548a-rs/actions?query=workflow%3ABuild)
 [![Coverage Status](https://coveralls.io/repos/github/eldruin/xca9548a-rs/badge.svg?branch=master)](https://coveralls.io/github/eldruin/xca9548a-rs?branch=master)
 
@@ -114,6 +115,11 @@ where
 
 For questions, issues, feature requests, and other changes, please file an
 [issue in the github project](https://github.com/eldruin/xca9548a-rs/issues).
+
+## Minimum Supported Rust Version (MSRV)
+
+This crate is guaranteed to compile on stable Rust 1.62 and up. It *might*
+compile with older versions but that may change in any new patch release.
 
 ## License
 
