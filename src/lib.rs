@@ -181,20 +181,14 @@ pub enum Error<E: core::fmt::Debug> {
 }
 
 /// Possible slave addresses
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum SlaveAddr {
     /// Default slave address
+    #[default]
     Default,
     /// Alternative slave address providing bit values for A2, A1 and A0
     /// Note: Some devices does not have all Ax pins, these should be set to false.
     Alternative(bool, bool, bool),
-}
-
-impl Default for SlaveAddr {
-    /// Default slave address
-    fn default() -> Self {
-        SlaveAddr::Default
-    }
 }
 
 impl SlaveAddr {
@@ -210,7 +204,7 @@ impl SlaveAddr {
 const DEVICE_BASE_ADDRESS: u8 = 0b111_0000;
 
 #[doc(hidden)]
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Xca954xaData<I2C> {
     /// The concrete I²C device implementation.
     pub(crate) i2c: I2C,
@@ -249,19 +243,19 @@ pub trait SelectChannels: private::Sealed {
 }
 
 /// Device driver for T/PCA9548A
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Xca9548a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
 }
 
 /// Device driver for T/PCA9543A
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Xca9543a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
 }
 
 /// Device driver for T/PCA9545A
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Xca9545a<I2C> {
     pub(crate) data: cell::RefCell<Xca954xaData<I2C>>,
 }
