@@ -47,7 +47,7 @@ Please find additional examples using hardware in this repository: [driver-examp
 [driver-examples]: https://github.com/eldruin/driver-examples
 
 ```rust
-use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+use embedded_hal::i2c::I2c;
 use linux_embedded_hal::I2cdev;
 use xca9548a::{Error, SlaveAddr, Xca9548a};
 
@@ -100,7 +100,8 @@ struct Driver<I2C> {
 
 impl<I2C, E> Driver<I2C>
 where
-    I2C: Write<Error = E> + Read<Error = E> + WriteRead<Error = E>,
+    I2C: I2c<Error = E>,
+    E: core::fmt::Debug,
 {
     pub fn new(i2c: I2C) -> Self {
         Driver { i2c }
