@@ -1,5 +1,5 @@
-use core::cell;
 use crate::Xca954xaData;
+use core::cell;
 
 /// All possible errors in this crate
 #[derive(Debug)]
