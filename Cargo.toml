@@ -1,6 +1,6 @@
 [package]
 name = "xca9548a"
-version = "0.2.1"
+version = "1.0.0"
 authors = ["Diego Barrios Romero <eldruin@gmail.com>"]
 repository = "https://github.com/eldruin/xca9548a-rs"
 license = "MIT OR Apache-2.0"
