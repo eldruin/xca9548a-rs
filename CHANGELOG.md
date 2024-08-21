@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Changed
+- The methods `get_interrupt_status` and `get_channel_status` now require an immutable reference instead of a mutable one.
+
 ## [1.0.0] - 2024-08-05
 
 ### Added

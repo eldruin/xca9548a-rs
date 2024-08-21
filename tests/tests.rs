@@ -8,6 +8,12 @@ const SLAVE_ADDR: u8 = 0b010_0000;
 const SLAVE_WRITE_DATA: [u8; 2] = [0b0101_0101, 0b1010_1010];
 const SLAVE_READ_DATA: [u8; 2] = [0b1001_1001, 0b0110_0110];
 
+struct Device<I2C>(I2C);
+
+impl<I2C> Device<I2C> {
+    fn do_something(&mut self) {}
+}
+
 macro_rules! test_interrupt {
     ( $name:ident, $channels:expr ) => {
         #[test]
@@ -16,8 +22,23 @@ macro_rules! test_interrupt {
                 DEV_ADDR,
                 vec![0b1010_0000 & ($channels << 4)],
             )];
-            let mut switch = new(&transactions);
+            let switch = new(&transactions);
             let read_status = switch.get_interrupt_status().unwrap();
+            assert_eq!(0b0000_1010 & $channels, read_status);
+            switch.destroy().done();
+        }
+
+        #[test]
+        fn can_get_interrupt_status_after_split() {
+            let transactions = [I2cTrans::read(
+                DEV_ADDR,
+                vec![0b1010_0000 & ($channels << 4)],
+            )];
+            let switch = new(&transactions);
+            let parts = switch.split();
+            let mut d = Device(parts.i2c0);
+            let read_status = switch.get_interrupt_status().unwrap();
+            d.do_something();
             assert_eq!(0b0000_1010 & $channels, read_status);
             switch.destroy().done();
         }
@@ -53,8 +74,20 @@ macro_rules! test_device {
         #[test]
         fn can_get_channel_status() {
             let transactions = [I2cTrans::read(DEV_ADDR, vec![0b0101_0101 & $channels])];
-            let mut switch = new(&transactions);
+            let switch = new(&transactions);
             let read_status = switch.get_channel_status().unwrap();
+            assert_eq!(0b0101_0101 & $channels, read_status);
+            switch.destroy().done();
+        }
+
+        #[test]
+        fn can_get_channel_status_after_split() {
+            let transactions = [I2cTrans::read(DEV_ADDR, vec![0b0101_0101 & $channels])];
+            let switch = new(&transactions);
+            let parts = switch.split();
+            let mut d = Device(parts.i2c0);
+            let read_status = switch.get_channel_status().unwrap();
+            d.do_something();
             assert_eq!(0b0101_0101 & $channels, read_status);
             switch.destroy().done();
         }

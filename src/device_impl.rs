@@ -160,7 +160,7 @@ macro_rules! impl_device {
             /// Bit 0 corresponds to channel 0 and so on up to bit 7 which
             /// corresponds to channel 7.
             /// A `0` means the channel is disabled and a `1` that the channel is enabled.
-            pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+            pub fn get_channel_status(&self) -> Result<u8, Error<E>> {
                 let mut data = [0];
                 self.do_on_acquired(|mut dev| {
                     let address = dev.address;
@@ -202,7 +202,7 @@ macro_rules! impl_device {
             /// Each bit corresponds to a channel.
             /// Bit 0 corresponds to channel 0, bit 1 to channel 1 and so on.
             /// A `0` means the channel is disabled and a `1` that the channel is enabled.
-            pub fn get_channel_status(&mut self) -> Result<u8, Error<E>> {
+            pub fn get_channel_status(&self) -> Result<u8, Error<E>> {
                 let mut data = [0];
                 self.do_on_acquired(|mut dev| {
                     let address = dev.address;
@@ -219,7 +219,7 @@ macro_rules! impl_device {
             /// Bit 0 corresponds to channel 0, bit 1 to channel 1 and so on.
             /// A `1` means the channel's interrupt is high and a `0` that the channel's interrupt is low.
             /// Note: I2C interrupts are usually active LOW!
-            pub fn get_interrupt_status(&mut self) -> Result<u8, Error<E>> {
+            pub fn get_interrupt_status(&self) -> Result<u8, Error<E>> {
                 let mut data = [0];
                 self.do_on_acquired(|mut dev| {
                     let address = dev.address;
